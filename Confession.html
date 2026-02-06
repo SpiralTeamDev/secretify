@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Secretify</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #7f5cff, #ff6ec4, #ffa36c);
+      background-size: 400% 400%;
+      animation: gradientMove 15s ease infinite;
+      color: white;
+    }
+
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+    }
+
+    .google-btn {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      background: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      width: auto;
+    }
+
+    .google-btn img { width: 18px; }
+
+    .screen {
+      max-width: 1000px;
+      margin: auto;
+      padding: 40px 20px;
+      display: none;
+    }
+
+    .active { display: block; }
+
+    .card {
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(15px);
+      border-radius: 24px;
+      padding: 25px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+      animation: floatIn 0.6s ease;
+      margin-bottom: 20px;
+    }
+
+    @keyframes floatIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: none;
+      padding: 12px 16px;
+      border-radius: 14px;
+      margin-top: 10px;
+      font-family: inherit;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 999px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      background: linear-gradient(135deg, #00ffb3, #00bfff);
+      color: #111;
+    }
+
+    .code { font-size: 26px; letter-spacing: 4px; font-weight: 700; text-align: center; }
+    .note { font-size: 12px; color: #eee; margin-top: 6px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h2>Secretify</h2>
+  <button class="google-btn">
+    <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png">
+    Sign in with Google
+  </button>
+</header>
+
+<!-- START MENU -->
+<div id="start" class="screen active">
+  <div class="card">
+    <h2>Was möchtest du tun?</h2>
+    <button onclick="showScreen('create')">Raum erstellen</button>
+    <button onclick="showScreen('join')">Raum beitreten</button>
+  </div>
+</div>
+
+<!-- CREATE -->
+<div id="create" class="screen">
+  <div class="card">
+    <h3>Raumtyp</h3>
+    <select id="roomType" onchange="updateDevices()">
+      <option>Community</option>
+      <option>Freunde</option>
+    </select>
+
+    <div id="devicesWrapper">
+      <h3>Anzahl Handys</h3>
+      <select id="devices" onchange="updateDevices()">
+        <option>2+</option>
+        <option>1</option>
+      </select>
+      <div id="maxNote" class="note">Maximal 20 Leute zulässig</div>
+    </div>
+
+    <div id="friendsOptions">
+      <h3>Spielmodus</h3>
+      <select id="mode">
+        <option>Beichten</option>
+        <option>Wahr oder Falsch</option>
+      </select>
+
+      <h3>Usernamen</h3>
+      <select id="names">
+        <option>Mit Nutzernamen</option>
+        <option>Ohne Nutzernamen</option>
+      </select>
+    </div>
+
+    <button onclick="createRoom()">Raum starten</button>
+
+    <div id="codeBox" style="display:none">
+      <p>Dein Code:</p>
+      <div class="code" id="roomCode"></div>
+    </div>
+
+    <button onclick="showScreen('start')">Zurück</button>
+    <button style="display:none; margin-top:10px;" id="myRoomsBtn">Meine Räume <span class="note">(Erst mit richtigem Anmelde System aktivieren)</span></button>
+  </div>
+</div>
+
+<!-- JOIN -->
+<div id="join" class="screen">
+  <div class="card">
+    <h3>Code eingeben</h3>
+    <input id="joinCode" placeholder="AB12CD" />
+    <input id="username" placeholder="Dein Name (optional)" />
+    <button onclick="joinRoom()">Beitreten</button>
+    <button onclick="showScreen('start')">Zurück</button>
+  </div>
+</div>
+
+<!-- SINGLE PHONE MODE -->
+<div id="single" class="screen">
+  <div class="card">
+    <h3>Beichte eingeben</h3>
+    <textarea id="singleText"></textarea>
+    <button onclick="saveSingle()">Weiter</button>
+    <button onclick="endSingle()">Runde beenden</button>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="results" class="screen">
+  <div class="card">
+    <h2>Alle Beichten</h2>
+    <div id="resultList"></div>
+    <button onclick="location.reload()">Neue Runde</button>
+  </div>
+</div>
+
+<script>
+  let confessions = [];
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function updateDevices() {
+    const room = document.getElementById('roomType').value;
+    const val = document.getElementById('devices').value;
+
+    if (room === 'Community') {
+      document.getElementById('devicesWrapper').style.display = 'none';
+      document.getElementById('friendsOptions').style.display = 'block';
+    } else {
+      document.getElementById('devicesWrapper').style.display = 'block';
+      document.getElementById('friendsOptions').style.display =
+        val === '1' ? 'none' : 'block';
+    }
+  }
+
+  function createRoom() {
+    const roomType = document.getElementById('roomType').value;
+    const devices = document.getElementById('devices').value;
+
+    if (roomType === 'Community') {
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      document.getElementById('roomCode').innerText = code;
+      document.getElementById('codeBox').style.display = 'block';
+      alert('Community Raum erstellt. Nur du stimmst später Wahr/Falsch ab.');
+      return;
+    }
+
+    if (devices === '1') {
+      showScreen('single');
+    } else {
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      document.getElementById('roomCode').innerText = code;
+      document.getElementById('codeBox').style.display = 'block';
+    }
+  }
+
+  function joinRoom() {
+    alert('Beigetreten! (Demo)');
+  }
+
+  function saveSingle() {
+    const text = document.getElementById('singleText').value;
+    if (text) {
+      confessions.push(text);
+      document.getElementById('singleText').value = '';
+    }
+  }
+
+  function endSingle() {
+    if (confirm('Willst du wirklich beenden und alle Beichten sehen?')) {
+      showScreen('results');
+      const list = document.getElementById('resultList');
+      list.innerHTML = '';
+      confessions.forEach((c,i) => {
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerText = 'Beichte ' + (i+1) + ': ' + c;
+        list.appendChild(div);
+      });
+    }
+  }
+
+  // Initial UI state
+  updateDevices();
+</script>
+
+</body>
+</html>
