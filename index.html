@@ -8,17 +8,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:Poppins,sans-serif;
-  min-height:100vh;
-  background:linear-gradient(135deg,#7f5cff,#ff6ec4,#ffa36c);
-  background-size:300% 300%;
-  animation:grad 15s ease infinite;
-  color:white;
-}
+body{margin:0;font-family:Poppins,sans-serif;min-height:100vh;background:linear-gradient(135deg,#7f5cff,#ff6ec4,#ffa36c);background-size:300% 300%;animation:grad 15s ease infinite;color:white}
 @keyframes grad{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-.screen{display:none;max-width:600px;margin:auto;padding:40px;animation:fade .5s}
+.screen{display:none;max-width:600px;margin:auto;padding:40px;animation:fade .4s}
 .active{display:block}
 @keyframes fade{from{opacity:0;transform:translateY(20px)}to{opacity:1}}
 .card{background:rgba(255,255,255,.18);border-radius:24px;padding:25px;backdrop-filter:blur(12px)}
@@ -26,23 +18,23 @@ button{width:100%;padding:12px;border:none;border-radius:999px;margin-top:12px;f
 .opt-group{display:flex;gap:10px;margin-top:10px}
 .opt{flex:1;padding:10px;text-align:center;border-radius:999px;background:rgba(255,255,255,.25);cursor:pointer;transition:.2s}
 .opt.active{background:#00ffb3;color:#111;font-weight:700}
-.google-btn{position:fixed;top:12px;right:12px;background:white;color:#111;border:none;padding:6px 10px;border-radius:999px;display:flex;gap:6px;align-items:center;font-size:12px;width:auto}
-.google-btn img{width:16px}
+.google-btn{position:fixed;top:12px;right:12px;background:white;color:#111;border:none;padding:6px 10px;border-radius:999px;display:flex;gap:6px;align-items:center;font-size:12px;width:auto;z-index:10}
+.google-btn img{width:16px;height:16px}
 .fake-input{background:rgba(255,255,255,.25);padding:12px;border-radius:999px;margin-top:10px;text-align:center;letter-spacing:4px;font-weight:700}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:20}
 .modal.active{display:flex}
 .modal .box{background:#222;padding:25px;border-radius:20px;text-align:center;width:80%;max-width:300px}
 </style>
 </head>
 <body>
 
-<button class="google-btn"><img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg">Sign in</button>
+<button class="google-btn"><img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg">Sign in with Google</button>
 
 <div id="start" class="screen active">
 <div class="card">
 <h2>Confessly</h2>
-<button onclick="show('create')">Raum erstellen</button>
-<button onclick="show('join')">Raum beitreten</button>
+<button onclick="showScreen('create')">Raum erstellen</button>
+<button onclick="showScreen('join')">Raum beitreten</button>
 </div>
 </div>
 
@@ -77,17 +69,17 @@ button{width:100%;padding:12px;border:none;border-radius:999px;margin-top:12px;f
 
 <button onclick="createRoom()">Raum starten</button>
 <div id="createdCode"></div>
-<button onclick="show('start')">Zurück</button>
+<button onclick="showScreen('start')">Zurück</button>
 </div>
 </div>
 
 <div id="join" class="screen">
 <div class="card">
 <h3>Code</h3>
-<div id="joinCode" class="fake-input" contenteditable>AB12CD</div>
-<div id="username" class="fake-input" contenteditable style="display:none">Name</div>
+<div id="joinCode" class="fake-input" contenteditable></div>
+<div id="username" class="fake-input" contenteditable style="display:none"></div>
 <button onclick="joinRoom()">Beitreten</button>
-<button onclick="show('start')">Zurück</button>
+<button onclick="showScreen('start')">Zurück</button>
 </div>
 </div>
 
@@ -100,40 +92,57 @@ button{width:100%;padding:12px;border:none;border-radius:999px;margin-top:12px;f
 </div>
 
 <script>
-const SUPABASE_URL="https://dnnweunvyoqagcpyccsr.supabase.co";
-const SUPABASE_KEY="sb_publishable_1MSOjgqoEGBBm8Ya9qUrbg_WZxcP61l";
-const supabase=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const SUPABASE_URL = "https://dnnweunvyoqagcpyccsr.supabase.co";
+const SUPABASE_KEY = "sb_publishable_1MSOjgqoEGBBm8Ya9qUrbg_WZxcP61l";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let roomType="Community",devices="2+",mode="Beichten",useNames=true,currentRoom=null;
+let roomType="Community";
+let devices="2+";
+let mode="Beichten";
+let useNames=true;
+let currentRoom=null;
 
-function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
 
 function selectOpt(el,key,val){
   el.parentElement.querySelectorAll('.opt').forEach(o=>o.classList.remove('active'));
   el.classList.add('active');
   window[key]=val;
-  if(key==="roomType"){
-    devicesBox.style.display=val==="Freunde"?"block":"none";
+  if(key==='roomType'){
+    document.getElementById('devicesBox').style.display = val==='Freunde'?'block':'none';
   }
 }
 
 async function createRoom(){
-  const code=Math.random().toString(36).substring(2,8).toUpperCase();
-  await supabase.from('rooms').insert({code,room_type:roomType,devices,mode,use_names:useNames});
-  createdCode.innerHTML=`<h2>Code: ${code}</h2>`;
+  const code = Math.random().toString(36).substring(2,8).toUpperCase();
+  const {error} = await supabase.from('rooms').insert({
+    code: code,
+    room_type: roomType,
+    devices: devices,
+    mode: mode,
+    use_names: useNames
+  });
+  if(error){alert(error.message);return;}
+  document.getElementById('createdCode').innerHTML = `<h2>Code: ${code}</h2>`;
 }
 
 async function joinRoom(){
-  const code=joinCode.innerText.trim().toUpperCase();
-  const {data}=await supabase.from('rooms').select('*').eq('code',code).single();
-  if(!data){alert('Raum existiert nicht');return}
+  const code = document.getElementById('joinCode').innerText.trim().toUpperCase();
+  const {data,error} = await supabase.from('rooms').select('*').eq('code',code).single();
+  if(!data){alert('Raum existiert nicht');return;}
   currentRoom=data;
-  if(data.use_names){username.style.display='block';return}
+  if(data.use_names){
+    document.getElementById('username').style.display='block';
+    return;
+  }
   openModal();
 }
 
-function openModal(){confirmModal.classList.add('active')}
-function closeModal(){confirmModal.classList.remove('active')}
+function openModal(){document.getElementById('confirmModal').classList.add('active')}
+function closeModal(){document.getElementById('confirmModal').classList.remove('active')}
 function confirmYes(){closeModal();alert('Beichten werden geladen (Demo)')}
 </script>
 </body>
