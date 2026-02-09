@@ -4,190 +4,137 @@
 <meta charset="UTF-8">
 <title>Confessly</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
+*{box-sizing:border-box}
 body{
   margin:0;
   font-family:Poppins,sans-serif;
   min-height:100vh;
   background:linear-gradient(135deg,#7f5cff,#ff6ec4,#ffa36c);
+  background-size:300% 300%;
+  animation:grad 15s ease infinite;
   color:white;
 }
-.screen{display:none;max-width:600px;margin:auto;padding:40px}
+@keyframes grad{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.screen{display:none;max-width:600px;margin:auto;padding:40px;animation:fade .5s}
 .active{display:block}
-.card{
-  background:rgba(255,255,255,.15);
-  border-radius:24px;
-  padding:25px;
-}
-button{
-  width:100%;
-  padding:12px;
-  border:none;
-  border-radius:999px;
-  margin-top:12px;
-  font-weight:600;
-  cursor:pointer;
-}
+@keyframes fade{from{opacity:0;transform:translateY(20px)}to{opacity:1}}
+.card{background:rgba(255,255,255,.18);border-radius:24px;padding:25px;backdrop-filter:blur(12px)}
+button{width:100%;padding:12px;border:none;border-radius:999px;margin-top:12px;font-weight:600;cursor:pointer;background:linear-gradient(135deg,#00ffb3,#00bfff)}
 .opt-group{display:flex;gap:10px;margin-top:10px}
-.opt{
-  flex:1;
-  padding:10px;
-  text-align:center;
-  border-radius:999px;
-  background:rgba(255,255,255,.2);
-  cursor:pointer;
-}
+.opt{flex:1;padding:10px;text-align:center;border-radius:999px;background:rgba(255,255,255,.25);cursor:pointer;transition:.2s}
 .opt.active{background:#00ffb3;color:#111;font-weight:700}
-.google-btn{
-  position:fixed;
-  top:12px;
-  right:12px;
-  background:white;
-  color:#111;
-  border:none;
-  padding:6px 10px;
-  border-radius:999px;
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  font-size:12px;
-  width:auto !important;
-}
-.google-btn img{
-  width:16px;
-  height:16px;
-}
+.google-btn{position:fixed;top:12px;right:12px;background:white;color:#111;border:none;padding:6px 10px;border-radius:999px;display:flex;gap:6px;align-items:center;font-size:12px;width:auto}
+.google-btn img{width:16px}
+.fake-input{background:rgba(255,255,255,.25);padding:12px;border-radius:999px;margin-top:10px;text-align:center;letter-spacing:4px;font-weight:700}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center}
+.modal.active{display:flex}
+.modal .box{background:#222;padding:25px;border-radius:20px;text-align:center;width:80%;max-width:300px}
 </style>
 </head>
-
 <body>
 
-<button class="google-btn">
- <img src="https://www.google.com/favicon.ico">
-  Sign in with Google
-</button>
+<button class="google-btn"><img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg">Sign in</button>
 
 <div id="start" class="screen active">
-  <div class="card">
-    <h2>Confessly</h2>
-    <button onclick="show('create')">Raum erstellen</button>
-    <button onclick="show('join')">Raum beitreten</button>
-  </div>
+<div class="card">
+<h2>Confessly</h2>
+<button onclick="show('create')">Raum erstellen</button>
+<button onclick="show('join')">Raum beitreten</button>
+</div>
 </div>
 
 <div id="create" class="screen">
-  <div class="card">
+<div class="card">
+<h3>Raumtyp</h3>
+<div class="opt-group">
+<div class="opt active" onclick="selectOpt(this,'roomType','Community')">Community</div>
+<div class="opt" onclick="selectOpt(this,'roomType','Freunde')">Freunde</div>
+</div>
 
-    <h3>Raumtyp</h3>
-    <div class="opt-group">
-      <div class="opt active" onclick="setRoomType('Community')">Community</div>
-      <div class="opt" onclick="setRoomType('Freunde')">Freunde</div>
-    </div>
+<div id="devicesBox" style="display:none">
+<h3>Anzahl Handys</h3>
+<div class="opt-group">
+<div class="opt active" onclick="selectOpt(this,'devices','2+')">2+</div>
+<div class="opt" onclick="selectOpt(this,'devices','1')">1</div>
+</div>
+<small>Maximal 20 Leute</small>
+</div>
 
-    <div id="devicesBox" style="display:none">
-      <h3>Anzahl Handys</h3>
-      <div class="opt-group">
-        <div class="opt active" onclick="setDevices('2+')">2+</div>
-        <div class="opt" onclick="setDevices('1')">1</div>
-      </div>
-      <small>Maximal 20 Leute zulässig</small>
-    </div>
+<h3>Spielmodus</h3>
+<div class="opt-group">
+<div class="opt active" onclick="selectOpt(this,'mode','Beichten')">Beichten</div>
+<div class="opt" onclick="selectOpt(this,'mode','Wahr/Falsch')">Wahr/Falsch</div>
+</div>
 
-    <h3>Spielmodus</h3>
-    <div class="opt-group">
-      <div class="opt active" onclick="setMode('Beichten')">Beichten</div>
-      <div class="opt" onclick="setMode('Wahr/Falsch')">Wahr oder Falsch</div>
-    </div>
+<h3>Usernamen</h3>
+<div class="opt-group">
+<div class="opt active" onclick="selectOpt(this,'useNames',true)">Mit Namen</div>
+<div class="opt" onclick="selectOpt(this,'useNames',false)">Ohne Namen</div>
+</div>
 
-    <h3>Usernamen</h3>
-    <div class="opt-group">
-      <div class="opt active" onclick="setNames(true)">Mit Namen</div>
-      <div class="opt" onclick="setNames(false)">Ohne Namen</div>
-    </div>
-
-    <button onclick="createRoom()">Raum starten</button>
-    <div id="createdCode"></div>
-    <button onclick="show('start')">Zurück</button>
-  </div>
+<button onclick="createRoom()">Raum starten</button>
+<div id="createdCode"></div>
+<button onclick="show('start')">Zurück</button>
+</div>
 </div>
 
 <div id="join" class="screen">
-  <div class="card">
-    <h3>Code</h3>
-    <input id="joinCode" placeholder="AB12CD">
-    <input id="username" placeholder="Name" style="display:none">
-    <button onclick="joinRoom()">Beitreten</button>
-    <button onclick="show('start')">Zurück</button>
-  </div>
+<div class="card">
+<h3>Code</h3>
+<div id="joinCode" class="fake-input" contenteditable>AB12CD</div>
+<div id="username" class="fake-input" contenteditable style="display:none">Name</div>
+<button onclick="joinRoom()">Beitreten</button>
+<button onclick="show('start')">Zurück</button>
+</div>
+</div>
+
+<div id="confirmModal" class="modal">
+<div class="box">
+<p>Bist du sicher dass du die Beichten sehen willst?</p>
+<button onclick="confirmYes()">Ja</button>
+<button onclick="closeModal()">Abbrechen</button>
+</div>
 </div>
 
 <script>
-const SUPABASE_URL = "https://dnnweunvyoqagcpyccsr.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_1MSOjgqoEGBBm8Ya9qUrbg_WZxcP61l";
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_URL="https://dnnweunvyoqagcpyccsr.supabase.co";
+const SUPABASE_KEY="sb_publishable_1MSOjgqoEGBBm8Ya9qUrbg_WZxcP61l";
+const supabase=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-let roomType="Community";
-let devices="2+";
-let mode="Beichten";
-let useNames=true;
+let roomType="Community",devices="2+",mode="Beichten",useNames=true,currentRoom=null;
 
-function show(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+
+function selectOpt(el,key,val){
+  el.parentElement.querySelectorAll('.opt').forEach(o=>o.classList.remove('active'));
+  el.classList.add('active');
+  window[key]=val;
+  if(key==="roomType"){
+    devicesBox.style.display=val==="Freunde"?"block":"none";
+  }
 }
-
-function setRoomType(t){
-  roomType=t;
-  document.getElementById("devicesBox").style.display =
-    t==="Freunde"?"block":"none";
-}
-
-function setDevices(v){devices=v}
-function setMode(v){mode=v}
-function setNames(v){useNames=v}
 
 async function createRoom(){
-  const code = Math.random().toString(36).substring(2,8).toUpperCase();
-
-  await supabase.from("rooms").insert({
-    code,
-    room_type: roomType,
-    devices,
-    mode,
-    use_names: useNames
-  });
-
-  document.getElementById("createdCode").innerHTML =
-    `<h2>Code: ${code}</h2>`;
+  const code=Math.random().toString(36).substring(2,8).toUpperCase();
+  await supabase.from('rooms').insert({code,room_type:roomType,devices,mode,use_names:useNames});
+  createdCode.innerHTML=`<h2>Code: ${code}</h2>`;
 }
 
 async function joinRoom(){
-  const code = joinCode.value.toUpperCase();
-  const {data} = await supabase
-    .from("rooms")
-    .select("*")
-    .eq("code",code)
-    .single();
-
-  if(!data){alert("Raum existiert nicht");return;}
-
-  if(data.use_names){
-    username.style.display="block";
-    alert("Name eingeben und erneut klicken");
-  }else{
-    alert("Erfolgreich beigetreten!");
-  }
+  const code=joinCode.innerText.trim().toUpperCase();
+  const {data}=await supabase.from('rooms').select('*').eq('code',code).single();
+  if(!data){alert('Raum existiert nicht');return}
+  currentRoom=data;
+  if(data.use_names){username.style.display='block';return}
+  openModal();
 }
+
+function openModal(){confirmModal.classList.add('active')}
+function closeModal(){confirmModal.classList.remove('active')}
+function confirmYes(){closeModal();alert('Beichten werden geladen (Demo)')}
 </script>
 </body>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  // dein JS
-</script>
 </html>
-
-
