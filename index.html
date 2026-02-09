@@ -7,7 +7,6 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 body{
@@ -45,26 +44,30 @@ button{
 .opt.active{background:#00ffb3;color:#111;font-weight:700}
 .google-btn{
   position:fixed;
-  top:10px;
-  right:10px;
+  top:12px;
+  right:12px;
   background:white;
   color:#111;
   border:none;
   padding:6px 10px;
   border-radius:999px;
-  display:flex;
-  gap:6px;
+  display:inline-flex;
   align-items:center;
+  gap:6px;
   font-size:12px;
+  width:auto !important;
 }
-.google-btn img{width:14px}
+.google-btn img{
+  width:16px;
+  height:16px;
+}
 </style>
 </head>
 
 <body>
 
 <button class="google-btn">
-  <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg">
+ <img src="https://www.google.com/favicon.ico">
   Sign in with Google
 </button>
 
@@ -123,8 +126,8 @@ button{
 </div>
 
 <script>
-const SUPABASE_URL = "HIER_DEINE_URL";
-const SUPABASE_ANON_KEY = "HIER_DEIN_ANON_KEY";
+const SUPABASE_URL = "https://dnnweunvyoqagcpyccsr.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_1MSOjgqoEGBBm8Ya9qUrbg_WZxcP61l";
 const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let roomType="Community";
@@ -180,6 +183,11 @@ async function joinRoom(){
   }
 }
 </script>
-
 </body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // dein JS
+</script>
 </html>
+
+
