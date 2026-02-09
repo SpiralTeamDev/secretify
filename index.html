@@ -115,10 +115,20 @@ function selectOpt(el,key,val){
   el.parentElement.querySelectorAll('.opt').forEach(o=>o.classList.remove('active'));
   el.classList.add('active');
   window[key]=val;
+
   if(key==='roomType'){
     document.getElementById('devicesBox').style.display = val==='Freunde'?'block':'none';
   }
+
+  if(key==='devices' && val==='1'){
+    mode = "Beichten";
+    document.querySelectorAll('[onclick*="mode"]').forEach(o=>{
+      o.classList.remove('active');
+    });
+    document.querySelector('[onclick*="Beichten"]').classList.add('active');
+  }
 }
+
 
 async function createRoom(){
   const code = Math.random().toString(36).substring(2,8).toUpperCase();
@@ -154,3 +164,4 @@ console.log("Confessly loaded, Supabase OK:", !!sb);
 </script>
 </body>
 </html>
+
