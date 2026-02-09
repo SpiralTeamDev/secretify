@@ -20,10 +20,13 @@ button{width:100%;padding:12px;border:none;border-radius:999px;margin-top:12px;f
 .opt.active{background:#00ffb3;color:#111;font-weight:700}
 .google-btn{position:fixed;top:12px;right:12px;background:white;color:#111;border:none;padding:6px 10px;border-radius:999px;display:flex;gap:6px;align-items:center;font-size:12px;width:auto;z-index:10}
 .google-btn img{width:16px;height:16px}
-.fake-input{background:rgba(255,255,255,.25);padding:12px;border-radius:999px;margin-top:10px;text-align:center;letter-spacing:4px;font-weight:700}
+.fake-input{background:rgba(255,255,255,.25);padding:12px;border-radius:999px;margin-top:10px;text-align:center;letter-spacing:4px;font-weight:700;outline:none}
+.fake-input[contenteditable]{max-width:100%}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:20}
 .modal.active{display:flex}
 .modal .box{background:#222;padding:25px;border-radius:20px;text-align:center;width:80%;max-width:300px}
+.user-list{margin-top:10px}
+.user-item{display:flex;justify-content:space-between;background:rgba(255,255,255,.2);padding:6px 12px;border-radius:999px;margin-top:6px}
 </style>
 </head>
 <body>
@@ -67,15 +70,16 @@ button{width:100%;padding:12px;border:none;border-radius:999px;margin-top:12px;f
 <div class="opt" onclick="selectOpt(this,'useNames',false)">Ohne Namen</div>
 </div>
 
-<button onclick="createRoom()">Raum starten</button>
+<button onclick="createRoom()">Runde starten</button>
 <div id="createdCode"></div>
+<div id="hostUsers" class="user-list"></div>
 <button onclick="showScreen('start')">Zurück</button>
 </div>
 </div>
 
 <div id="join" class="screen">
 <div class="card">
-<h3>Code</h3>
+<h3>Code (max 5 Zeichen)</h3>
 <div id="joinCode" class="fake-input" contenteditable></div>
 <div id="username" class="fake-input" contenteditable style="display:none"></div>
 <button onclick="joinRoom()">Beitreten</button>
@@ -92,76 +96,61 @@ button{width:100%;padding:12px;border:none;border-radius:999px;margin-top:12px;f
 </div>
 
 <script>
-// Supabase Config
 const SUPABASE_URL = "https://dnnweunvyoqagcpyccsr.supabase.co";
 const SUPABASE_KEY = "sb_publishable_1MSOjgqoEGBBm8Ya9qUrbg_WZxcP61l";
-
-// IMPORTANT: do NOT redeclare 'supabase' (library already uses that name)
-// use a different variable
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let roomType="Community";
-let devices="2+";
-let mode="Beichten";
-let useNames=true;
-let currentRoom=null;
+let roomType="Community",devices="2+",mode="Beichten",useNames=true,currentRoom=null,currentCode=null;
 
-function showScreen(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
+function sanitize(text){return text.replace(/[^a-zA-Z0-9]/g,"").substring(0,5)}
+
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
 
 function selectOpt(el,key,val){
   el.parentElement.querySelectorAll('.opt').forEach(o=>o.classList.remove('active'));
   el.classList.add('active');
   window[key]=val;
-
   if(key==='roomType'){
-    document.getElementById('devicesBox').style.display = val==='Freunde'?'block':'none';
+    devicesBox.style.display = val==='Freunde'?'block':'none';
   }
-
-  if(key==='devices' && val==='1'){
-    mode = "Beichten";
-    document.querySelectorAll('[onclick*="mode"]').forEach(o=>{
-      o.classList.remove('active');
-    });
-    document.querySelector('[onclick*="Beichten"]').classList.add('active');
-  }
+  currentCode=null;createdCode.innerHTML="";hostUsers.innerHTML="";
 }
 
-
 async function createRoom(){
-  const code = Math.random().toString(36).substring(2,8).toUpperCase();
-  const {error} = await sb.from('rooms').insert({
-    code: code,
-    room_type: roomType,
-    devices: devices,
-    mode: mode,
-    use_names: useNames
-  });
+  const code = Math.random().toString(36).substring(2,7).toUpperCase();
+  currentCode=code;
+  const {error} = await sb.from('rooms').insert({code,room_type:roomType,devices,mode,use_names:useNames});
   if(error){alert(error.message);return;}
-  document.getElementById('createdCode').innerHTML = `<h2>Code: ${code}</h2>`;
+  createdCode.innerHTML = `<h2>Code: ${code}</h2>`;
 }
 
 async function joinRoom(){
-  const code = document.getElementById('joinCode').innerText.trim().toUpperCase();
-  const {data,error} = await sb.from('rooms').select('*').eq('code',code).single();
+  const code = sanitize(joinCode.innerText.toUpperCase());
+  joinCode.innerText=code;
+  const {data} = await sb.from('rooms').select('*').eq('code',code).single();
   if(!data){alert('Raum existiert nicht');return;}
   currentRoom=data;
-  if(data.use_names){
-    document.getElementById('username').style.display='block';
-    return;
-  }
+  if(data.use_names){username.style.display='block';return;}
   openModal();
 }
 
-function openModal(){document.getElementById('confirmModal').classList.add('active')}
-function closeModal(){document.getElementById('confirmModal').classList.remove('active')}
+function openModal(){confirmModal.classList.add('active')}
+function closeModal(){confirmModal.classList.remove('active')}
 function confirmYes(){closeModal();alert('Beichten werden geladen (Demo)')}
 
-// Basic sanity test
-console.log("Confessly loaded, Supabase OK:", !!sb);
+// Host user list demo (needs table players: room_code, name)
+setInterval(async()=>{
+ if(!currentCode||!useNames) return;
+ const {data}=await sb.from('players').select('*').eq('room_code',currentCode);
+ hostUsers.innerHTML="";
+ data?.forEach(p=>{
+  const div=document.createElement('div');div.className='user-item';
+  div.innerHTML=`${p.name}<button onclick="kick('${p.id}')">Kick</button>`;
+  hostUsers.appendChild(div);
+ });
+},2000);
+
+async function kick(id){await sb.from('players').delete().eq('id',id)}
 </script>
 </body>
 </html>
-
