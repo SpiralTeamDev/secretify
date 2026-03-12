@@ -10,29 +10,41 @@
 *{box-sizing:border-box}
 body{margin:0;font-family:Poppins,sans-serif;min-height:100vh;background:linear-gradient(135deg,#7f5cff,#ff6ec4,#ffa36c);background-size:300% 300%;animation:grad 15s ease infinite;color:white}
 @keyframes grad{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-.screen{display:none;max-width:600px;margin:auto;padding:40px;animation:fade .4s}
+
+.screen{display:none;max-width:650px;margin:auto;padding:40px;animation:fade .4s}
 .active{display:block}
+
 @keyframes fade{from{opacity:0;transform:translateY(20px)}to{opacity:1}}
+
 .card{background:rgba(255,255,255,.18);border-radius:24px;padding:25px;backdrop-filter:blur(12px)}
-button{width:100%;padding:12px;border:none;border-radius:999px;margin-top:12px;font-weight:600;cursor:pointer;background:linear-gradient(135deg,#00ffb3,#00bfff)}
+
+button{width:100%;padding:12px;border:none;border-radius:999px;margin-top:12px;font-weight:600;cursor:pointer;background:linear-gradient(135deg,#00ffb3,#00bfff);color:#111}
+
+button.danger{background:linear-gradient(135deg,#ff4b4b,#ff003c);color:white}
+
 .opt-group{display:flex;gap:10px;margin-top:10px}
 .opt{flex:1;padding:10px;text-align:center;border-radius:999px;background:rgba(255,255,255,.25);cursor:pointer;transition:.2s}
 .opt.active{background:#00ffb3;color:#111;font-weight:700}
+
 .google-btn{position:fixed;top:12px;right:12px;background:white;color:#111;border:none;padding:6px 10px;border-radius:999px;display:flex;gap:6px;align-items:center;font-size:12px;width:auto;z-index:10}
 .google-btn img{width:16px;height:16px}
-.fake-input{background:rgba(255,255,255,.25);padding:12px;border-radius:999px;margin-top:10px;text-align:center;letter-spacing:4px;font-weight:700;outline:none}
-.fake-input[contenteditable]{max-width:100%}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:20}
+
+.fake-input{background:rgba(255,255,255,.25);padding:14px;border-radius:20px;margin-top:10px;outline:none}
+
+textarea{width:100%;min-height:120px;border:none;border-radius:18px;padding:14px;font-family:Poppins}
+
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:100}
 .modal.active{display:flex}
-.modal .box{background:#222;padding:25px;border-radius:20px;text-align:center;width:80%;max-width:300px}
-.user-list{margin-top:10px}
-.user-item{display:flex;justify-content:space-between;background:rgba(255,255,255,.2);padding:6px 12px;border-radius:999px;margin-top:6px}
+.modal-box{background:#222;padding:25px;border-radius:20px;max-width:320px;width:90%;text-align:center}
+
+.confession{background:rgba(255,255,255,.2);padding:15px;border-radius:18px;margin-top:10px;animation:fade .4s}
 </style>
 </head>
 <body>
 
 <button class="google-btn"><img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg">Sign in with Google</button>
 
+<!-- MAIN -->
 <div id="start" class="screen active">
 <div class="card">
 <h2>Confessly</h2>
@@ -41,8 +53,10 @@ button{width:100%;padding:12px;border:none;border-radius:999px;margin-top:12px;f
 </div>
 </div>
 
+<!-- CREATE -->
 <div id="create" class="screen">
 <div class="card">
+
 <h3>Raumtyp</h3>
 <div class="opt-group">
 <div class="opt active" onclick="selectOpt(this,'roomType','Community')">Community</div>
@@ -55,102 +69,181 @@ button{width:100%;padding:12px;border:none;border-radius:999px;margin-top:12px;f
 <div class="opt active" onclick="selectOpt(this,'devices','2+')">2+</div>
 <div class="opt" onclick="selectOpt(this,'devices','1')">1</div>
 </div>
-<small>Maximal 20 Leute</small>
 </div>
 
+<div id="modeBox">
 <h3>Spielmodus</h3>
 <div class="opt-group">
 <div class="opt active" onclick="selectOpt(this,'mode','Beichten')">Beichten</div>
 <div class="opt" onclick="selectOpt(this,'mode','Wahr/Falsch')">Wahr/Falsch</div>
 </div>
+</div>
 
+<div id="nameBox">
 <h3>Usernamen</h3>
 <div class="opt-group">
 <div class="opt active" onclick="selectOpt(this,'useNames',true)">Mit Namen</div>
 <div class="opt" onclick="selectOpt(this,'useNames',false)">Ohne Namen</div>
 </div>
+</div>
 
-<button onclick="createRoom()">Runde starten</button>
+<button onclick="startRound()">Runde starten</button>
 <div id="createdCode"></div>
-<div id="hostUsers" class="user-list"></div>
 <button onclick="showScreen('start')">Zurück</button>
 </div>
 </div>
 
+<!-- LOCAL SINGLE DEVICE GAME -->
+<div id="localGame" class="screen">
+<div class="card">
+<h3>Beichte eingeben</h3>
+<textarea id="confessionInput"></textarea>
+<button onclick="nextConfession()">Weitergeben</button>
+<button onclick="submitConfessions()">Abgeben</button>
+<button class="danger" onclick="confirmEnd()">Beenden</button>
+</div>
+</div>
+
+<!-- SHOW CONFESSIONS -->
+<div id="showConfessions" class="screen">
+<div class="card">
+<h3>Beichten</h3>
+<div id="confessionList"></div>
+<button onclick="showScreen('start')">Neue Runde</button>
+</div>
+</div>
+
+<!-- JOIN -->
 <div id="join" class="screen">
 <div class="card">
-<h3>Code (max 5 Zeichen)</h3>
+<h3>Code</h3>
 <div id="joinCode" class="fake-input" contenteditable></div>
-<div id="username" class="fake-input" contenteditable style="display:none"></div>
-<button onclick="joinRoom()">Beitreten</button>
+<button>Beitreten</button>
 <button onclick="showScreen('start')">Zurück</button>
 </div>
 </div>
 
-<div id="confirmModal" class="modal">
-<div class="box">
-<p>Bist du sicher dass du die Beichten sehen willst?</p>
-<button onclick="confirmYes()">Ja</button>
+<!-- MODAL -->
+<div id="modal" class="modal">
+<div class="modal-box">
+<p id="modalText"></p>
+<button id="modalConfirm">OK</button>
 <button onclick="closeModal()">Abbrechen</button>
 </div>
 </div>
 
 <script>
-const SUPABASE_URL = "https://dnnweunvyoqagcpyccsr.supabase.co";
-const SUPABASE_KEY = "sb_publishable_1MSOjgqoEGBBm8Ya9qUrbg_WZxcP61l";
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_URL="https://dnnweunvyoqagcpyccsr.supabase.co";
+const SUPABASE_KEY="sb_publishable_1MSOjgqoEGBBm8Ya9qUrbg_WZxcP61l";
 
-let roomType="Community",devices="2+",mode="Beichten",useNames=true,currentRoom=null,currentCode=null;
+const sb = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-function sanitize(text){return text.replace(/[^a-zA-Z0-9]/g,"").substring(0,5)}
+let roomType="Community";
+let devices="2+";
+let mode="Beichten";
+let useNames=true;
 
-function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+let confessions=[];
+
+function showScreen(id){
+ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+ document.getElementById(id).classList.add('active');
+}
 
 function selectOpt(el,key,val){
-  el.parentElement.querySelectorAll('.opt').forEach(o=>o.classList.remove('active'));
-  el.classList.add('active');
-  window[key]=val;
-  if(key==='roomType'){
-    devicesBox.style.display = val==='Freunde'?'block':'none';
+ el.parentElement.querySelectorAll('.opt').forEach(o=>o.classList.remove('active'));
+ el.classList.add('active');
+ window[key]=val;
+
+ if(key==='roomType'){
+  devicesBox.style.display = val==='Freunde'?'block':'none';
+ }
+
+ if(key==='devices'){
+  if(val==='1'){
+   nameBox.style.display='none';
+  }else{
+   nameBox.style.display='block';
   }
-  currentCode=null;createdCode.innerHTML="";hostUsers.innerHTML="";
+ }
 }
 
-async function createRoom(){
-  const code = Math.random().toString(36).substring(2,7).toUpperCase();
-  currentCode=code;
-  const {error} = await sb.from('rooms').insert({code,room_type:roomType,devices,mode,use_names:useNames});
-  if(error){alert(error.message);return;}
-  createdCode.innerHTML = `<h2>Code: ${code}</h2>`;
+function startRound(){
+
+ if(roomType==='Freunde' && devices==='1'){
+   confessions=[];
+   showScreen('localGame');
+   return;
+ }
+
+ createOnlineRoom();
 }
 
-async function joinRoom(){
-  const code = sanitize(joinCode.innerText.toUpperCase());
-  joinCode.innerText=code;
-  const {data} = await sb.from('rooms').select('*').eq('code',code).single();
-  if(!data){alert('Raum existiert nicht');return;}
-  currentRoom=data;
-  if(data.use_names){username.style.display='block';return;}
-  openModal();
-}
+async function createOnlineRoom(){
+ const code=Math.random().toString(36).substring(2,7).toUpperCase();
 
-function openModal(){confirmModal.classList.add('active')}
-function closeModal(){confirmModal.classList.remove('active')}
-function confirmYes(){closeModal();alert('Beichten werden geladen (Demo)')}
-
-// Host user list demo (needs table players: room_code, name)
-setInterval(async()=>{
- if(!currentCode||!useNames) return;
- const {data}=await sb.from('players').select('*').eq('room_code',currentCode);
- hostUsers.innerHTML="";
- data?.forEach(p=>{
-  const div=document.createElement('div');div.className='user-item';
-  div.innerHTML=`${p.name}<button onclick="kick('${p.id}')">Kick</button>`;
-  hostUsers.appendChild(div);
+ const {error}=await sb.from('rooms').insert({
+  code:code,
+  room_type:roomType,
+  devices:devices,
+  mode:mode,
+  use_names:useNames
  });
-},2000);
 
-async function kick(id){await sb.from('players').delete().eq('id',id)}
+ if(error){
+  openModal("Server Fehler: "+error.message);
+  return;
+ }
+
+ createdCode.innerHTML="Code: "+code;
+}
+
+function nextConfession(){
+ const text=confessionInput.value.trim();
+ if(!text)return;
+ confessions.push(text);
+ confessionInput.value="";
+}
+
+function submitConfessions(){
+ openModal("Bist du sicher dass du alle Beichten abgeben willst?",showConfessionResults,true);
+}
+
+function confirmEnd(){
+ openModal("Willst du diese Runde wirklich beenden?",()=>showScreen('start'),true);
+}
+
+function showConfessionResults(){
+ confessionList.innerHTML="";
+ confessions.forEach(c=>{
+  const div=document.createElement('div');
+  div.className='confession';
+  div.textContent=c;
+  confessionList.appendChild(div);
+ });
+ showScreen('showConfessions');
+}
+
+function openModal(text,callback=null,showCancel=false){
+ modalText.textContent=text;
+ modal.classList.add('active');
+
+ modalConfirm.onclick=function(){
+  closeModal();
+  if(callback)callback();
+ };
+
+ modalConfirm.style.display='block';
+}
+
+function closeModal(){
+ modal.classList.remove('active');
+}
+
+// simple internal test
+console.assert(typeof showScreen==='function','showScreen missing');
+console.assert(typeof startRound==='function','startRound missing');
 </script>
+
 </body>
 </html>
